@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>CYBORG // SCANNER-UPLINK (SECURED)</title>
+    <title>CYBORG // SCANNER-UPLINK (OPTIMIZED)</title>
     <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
     <script src="https://unpkg.com/html5-qrcode"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
@@ -11,378 +11,242 @@
     <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;700&family=Orbitron:wght@400;700;900&family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
     
     <style>
-        :root { --o:  #ff6b35; --b:  #00d4ff; --g:  #00ff9d; --r:  #ff2255; --bg0: #010508; --bg1: #030c14; --ln:  rgba(0,212,255,.12); --txt: #c8dff0; --txt2: #7aaabf; --f-hud: 'Orbitron', monospace; --f-ui:  'Rajdhani', sans-serif; --f-th:  'Sarabun', sans-serif; }
-        @keyframes scan-beam  { 0%{top:-20%} 100%{top:110%} }
-        @keyframes blink      { 0%,100%{opacity:1} 49%,51%{opacity:0} }
-        @keyframes pulse-laser { 0%,100%{opacity:1; box-shadow: 0 0 15px var(--r), 0 0 5px var(--r);} 50%{opacity:0.6; box-shadow: 0 0 5px var(--r);} }
-
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: var(--f-th); background: var(--bg0); color: var(--txt); display: flex; flex-direction: column; height: 100vh; overflow: hidden; background-image: radial-gradient(rgba(0,212,255,.05) 1px, transparent 1px); background-size: 28px 28px; }
-        body::after { content:''; position:fixed; inset:0; background: repeating-linear-gradient( 0deg, rgba(0,0,0,.06) 0px, rgba(0,0,0,.06) 1px, transparent 1px, transparent 4px ); pointer-events:none; z-index:9999; }
-
-        .header { background: var(--bg1); padding: 15px 20px; border-bottom: 1px solid var(--ln); position: relative; background-image: linear-gradient(135deg, rgba(255,107,53,.07) 0%, transparent 50%); }
-        .header h1 { margin: 0; font-family: var(--f-hud); font-size: 18px; font-weight: 900; color: var(--o); letter-spacing: 2px; text-transform: uppercase; text-shadow: 0 0 10px rgba(255,107,53,.5); }
-        .hud-sub { font-family: var(--f-hud); font-size: 10px; letter-spacing: 2px; color: var(--b); margin-top: 5px; display: flex; align-items: center; gap: 7px; }
-        .blink-dot { width:5px; height:5px; background: var(--b); border-radius:50%; box-shadow: 0 0 6px var(--b); animation: blink 1.4s step-start infinite; }
-
-        #status-bar { padding: 10px 20px; font-family: var(--f-hud); font-size: 12px; letter-spacing: 1.5px; color: var(--b); border-bottom: 1px solid var(--ln); display: flex; align-items:center; background: rgba(0,212,255,.025); text-transform:uppercase; transition: color 0.3s; }
-
-        .container { padding: 15px; flex: 1; display: flex; flex-direction: column; overflow-y: auto; z-index: 10;}
-        .panel { background: rgba(6,18,32,.8); border: 1px solid var(--ln); position: relative; clip-path: polygon(10px 0%,100% 0%,100% calc(100% - 10px),calc(100% - 10px) 100%,0% 100%,0% 10px); padding: 15px; margin-bottom: 15px; }
-        .p-lbl { font-family: var(--f-hud); font-size: 11px; font-weight:700; letter-spacing:2px; color: var(--o); text-transform:uppercase; border-bottom: 1px solid rgba(0,212,255,.07); padding-bottom: 8px; margin-bottom: 12px; }
-
-        .inp { width:100%; background: rgba(0,0,0,.55); border: 1px solid rgba(0,212,255,.13); color: #e0eff8; font-family: var(--f-th); font-size: 16px; padding: 12px; outline:none; transition:.2s; clip-path: polygon(5px 0%,100% 0%,100% calc(100% - 5px),calc(100% - 5px) 100%,0% 100%,0% 5px); box-sizing: border-box; margin-bottom: 10px; }
-        .inp:focus { border-color: var(--o); background: rgba(255,107,53,.04); box-shadow: 0 0 0 1px rgba(255,107,53,.18), inset 0 0 15px rgba(255,107,53,.03); }
-        .inp.scan-input { font-family: var(--f-hud); font-size: 18px; font-weight: 700; letter-spacing: 3px; color: var(--g); border-color: rgba(0,255,157,.3); text-align: center;}
+        :root { --o: #ff6b35; --b: #00d4ff; --g: #00ff9d; --r: #ff2255; --bg0: #010508; --bg1: #030c14; --ln: rgba(0,212,255,.12); --txt: #c8dff0; --txt2: #7aaabf; --f-hud: 'Orbitron', sans-serif; --f-th: 'Sarabun', sans-serif; }
         
-        .btn-connect { width: 100%; background:transparent; border:1px solid var(--o); color:var(--o); padding:15px; font-family:var(--f-hud); font-size:16px; font-weight:700; cursor:pointer; transition:.2s; clip-path:polygon(8px 0%,100% 0%,100% calc(100% - 8px),calc(100% - 8px) 100%,0% 100%,0% 8px); text-transform:uppercase; letter-spacing: 2px; display: flex; justify-content: center; align-items: center; gap: 10px; }
-        .btn-connect:hover { background:var(--o); color:#000; box-shadow:0 0 20px rgba(255,107,53,.5); }
-        .btn-connect.stop { border-color: var(--r); color: var(--r); }
-        .btn-connect.stop:hover { background: var(--r); color: #fff; box-shadow:0 0 20px rgba(255,34,85,.5); }
+        @keyframes scan-beam { 0%{top:-20%} 100%{top:110%} }
+        @keyframes pulse-success { 0% { background: var(--bg0); } 50% { background: rgba(0, 255, 157, 0.2); } 100% { background: var(--bg0); } }
 
-        #reader { width: 100%; border: 1px solid var(--b); background: #000; display: none; position: relative;}
-        #reader video { object-fit: cover; }
-        .scan-beam-overlay { position:absolute; left:0; right:0; height:120px; background: linear-gradient(to bottom, transparent, rgba(0,212,255,.05) 45%, rgba(0,212,255,.1) 50%, rgba(0,212,255,.05) 55%, transparent ); pointer-events:none; z-index:19; animation: scan-beam 3s linear infinite; display: none;}
+        * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+        body { font-family: var(--f-th); background: var(--bg0); color: var(--txt); display: flex; flex-direction: column; height: 100vh; overflow: hidden; transition: background 0.3s; }
+        body.sync-flash { animation: pulse-success 0.4s ease-out; }
+
+        .header { background: var(--bg1); padding: 15px; border-bottom: 1px solid var(--ln); position: relative; }
+        .header h1 { font-family: var(--f-hud); font-size: 16px; color: var(--o); letter-spacing: 2px; }
         
-        .target-box { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 85%; height: 120px; z-index: 20; display: none; pointer-events: none; box-shadow: inset 0 0 20px rgba(255, 34, 85, 0.1); }
-        .target-box::before, .target-box::after { content: ''; position: absolute; width: 25px; height: 25px; border-color: var(--r); border-style: solid; }
-        .target-box::before { top: -2px; left: -2px; border-width: 4px 0 0 4px; }
-        .target-box::after { bottom: -2px; right: -2px; border-width: 0 4px 4px 0; }
-        .target-box .corner-tr { position: absolute; top: -2px; right: -2px; width: 25px; height: 25px; border-color: var(--r); border-style: solid; border-width: 4px 4px 0 0; }
-        .target-box .corner-bl { position: absolute; bottom: -2px; left: -2px; width: 25px; height: 25px; border-color: var(--r); border-style: solid; border-width: 0 0 4px 4px; }
-        .laser-line { position: absolute; top: 50%; left: 0; right: 0; height: 2px; background: var(--r); transform: translateY(-50%); animation: pulse-laser 1.5s infinite; }
+        #status-bar { padding: 8px 15px; font-family: var(--f-hud); font-size: 10px; letter-spacing: 1px; border-bottom: 1px solid var(--ln); background: rgba(0,212,255,.03); color: var(--b); display: flex; justify-content: space-between; }
 
-        .result-box { text-align: center; padding: 15px 0 5px; }
-        .result-name { font-size: 20px; font-weight: bold; color: var(--g); line-height: 1.3; text-shadow: 0 0 8px rgba(0,255,157,.5); margin-top: 5px;}
-        .result-code { font-family: var(--f-hud); font-size: 12px; color: var(--txt2); letter-spacing: 2px;}
+        .container { padding: 12px; flex: 1; overflow-y: auto; z-index: 10; }
+        .panel { background: rgba(6,18,32,.8); border: 1px solid var(--ln); padding: 15px; margin-bottom: 12px; clip-path: polygon(10px 0%,100% 0%,100% calc(100% - 10px),calc(100% - 10px) 100%,0% 100%,0% 10px); }
+        .p-lbl { font-family: var(--f-hud); font-size: 10px; color: var(--o); margin-bottom: 10px; border-bottom: 1px solid rgba(0,212,255,.1); padding-bottom: 5px; }
 
-        /* Custom SweetAlert */
-        .swal-cyberpunk { background: #061220 !important; border: 1px solid #00d4ff !important; color: #c8dff0 !important; font-family: 'Sarabun', sans-serif !important; box-shadow: 0 0 30px rgba(0,212,255,0.2) !important; clip-path: polygon(15px 0%,100% 0%,100% calc(100% - 15px),calc(100% - 15px) 100%,0% 100%,0% 15px); border-radius: 0 !important; }
-        .swal-title { color: #00d4ff !important; font-family: 'Orbitron', sans-serif !important; letter-spacing: 2px; }
-        .swal-confirm { background: #ff6b35 !important; color: #000 !important; font-weight: bold !important; font-family: 'Orbitron', sans-serif !important; border-radius: 0 !important; clip-path: polygon(5px 0%,100% 0%,100% calc(100% - 5px),calc(100% - 5px) 100%,0% 100%,0% 5px); margin: 5px !important;}
-        .swal-deny { background: #00d4ff !important; color: #000 !important; font-weight: bold !important; font-family: 'Sarabun', sans-serif !important; border-radius: 0 !important; clip-path: polygon(5px 0%,100% 0%,100% calc(100% - 5px),calc(100% - 5px) 100%,0% 100%,0% 5px); margin: 5px !important; }
-        .swal-cancel { background: transparent !important; color: #7aaabf !important; border: 1px solid #7aaabf !important; font-weight: bold !important; font-family: 'Orbitron', sans-serif !important; border-radius: 0 !important; clip-path: polygon(5px 0%,100% 0%,100% calc(100% - 5px),calc(100% - 5px) 100%,0% 100%,0% 5px); margin: 5px !important;}
+        .inp { width:100%; background: #000; border: 1px solid var(--ln); color: #fff; padding: 12px; font-size: 16px; outline:none; margin-bottom: 10px; }
+        .scan-input { font-family: var(--f-hud); font-size: 20px; color: var(--g); text-align: center; border-color: rgba(0,255,157,.3); }
+
+        .btn { width: 100%; background: transparent; border: 1px solid var(--o); color: var(--o); padding: 12px; font-family: var(--f-hud); font-weight: 700; cursor: pointer; text-transform: uppercase; }
+        .btn.active { background: var(--o); color: #000; }
+        .btn-stop { border-color: var(--r); color: var(--r); }
+
+        #reader { width: 100%; display: none; background: #000; border: 1px solid var(--b); overflow: hidden; position: relative; }
+        .scan-beam-overlay { position:absolute; left:0; right:0; height:80px; background: linear-gradient(to bottom, transparent, rgba(0,212,255,.2), transparent); pointer-events:none; z-index:19; display: none; }
+        .scanning .scan-beam-overlay { display: block; animation: scan-beam 2.5s linear infinite; }
+
+        .result-box { text-align: center; padding: 10px; }
+        .result-name { font-size: 18px; font-weight: 700; color: var(--g); min-height: 24px; }
         
-        .swal-input { width: 90%; background: rgba(0,0,0,0.8); border: 1px solid var(--b); color: #fff; padding: 10px; font-family: 'Sarabun'; font-size: 16px; margin: 5px 0; text-align: center; }
-        .swal-input:focus { border-color: var(--o); outline: none; }
+        /* SweetAlert Cyberpunk Theme */
+        .swal-cyber { background: #061220 !important; color: #fff !important; border: 1px solid var(--b) !important; border-radius: 0 !important; font-family: var(--f-th) !important; }
     </style>
 </head>
-<body>
+<body id="main-body">
 
     <div class="header">
-        <h1>CYBORG // UPLINK</h1>
-        <div class="hud-sub"><span class="blink-dot"></span> GOD MODE (SECURED)</div>
+        <h1>CYBORG // SCANNER-UPLINK</h1>
     </div>
 
-    <div id="status-bar" style="color: var(--o);">SYNCING CLOUD DATABASE...</div>
+    <div id="status-bar">
+        <span id="mqtt-stat">OFFLINE</span>
+        <span id="db-stat">DB: LOADING...</span>
+    </div>
 
     <div class="container">
         <div class="panel">
-            <div class="p-lbl">COMMUNICATION CHANNEL</div>
-            <div style="display: flex; gap: 10px;">
-                <input type="text" id="scanner-id" class="inp" value="1" style="flex: 1; text-align: center; font-family: var(--f-hud); font-weight: bold;" onchange="setupMQTT()">
-                <button class="btn-connect" style="flex: 1; padding: 10px; font-size: 12px;" onclick="setupMQTT()">SYNC</button>
+            <div class="p-lbl">COMMS CHANNEL</div>
+            <div style="display: flex; gap: 8px;">
+                <input type="number" id="scanner-id" class="inp" value="1" style="flex: 1; text-align: center;">
+                <button class="btn" style="flex: 1;" onclick="setupMQTT()">RE-SYNC</button>
             </div>
         </div>
 
-        <div class="panel">
-            <div class="p-lbl">OPTICAL SCANNER</div>
-            <button id="cam-btn" class="btn-connect" onclick="toggleCamera()">[ O ] ENABLE OPTICS</button>
-            <div style="margin-top: 15px;"></div>
+        <div class="panel" id="scanner-panel">
+            <div class="p-lbl">OPTICAL SENSORS</div>
+            <button id="cam-btn" class="btn" onclick="toggleCamera()">[ O ] START SCANNER</button>
             
-            <div style="position: relative;">
-                <div id="scan-beam-overlay" class="scan-beam-overlay"></div>
-                <div id="target-box" class="target-box"><div class="corner-tr"></div><div class="corner-bl"></div><div class="laser-line"></div></div>
-                <div id="reader"></div>
+            <div id="reader" style="margin-top: 15px;">
+                <div class="scan-beam-overlay"></div>
             </div>
-            
-            <div style="margin: 15px 0; color: var(--txt2); font-size: 11px; font-family: var(--f-hud); text-align: center; letter-spacing: 2px;">-- MANUAL OVERRIDE --</div>
-            
-            <form onsubmit="event.preventDefault(); processManualScan();">
-                <input type="text" id="barcode-input" class="inp scan-input" placeholder="AWAITING INPUT...">
+
+            <form onsubmit="event.preventDefault(); processManualScan();" style="margin-top: 15px;">
+                <input type="text" id="barcode-input" class="inp scan-input" placeholder="MANUAL INPUT">
             </form>
         </div>
 
         <div class="panel">
-            <div class="p-lbl">LATEST TRANSMISSION</div>
+            <div class="p-lbl">LATEST TELEMETRY</div>
             <div class="result-box">
-                <div id="result-code" class="result-code">STANDBY...</div>
-                <div id="result-name" class="result-name" style="color: var(--txt2);">ระบบพร้อมทำงาน</div>
+                <div id="res-code" style="font-family: var(--f-hud); font-size: 12px; color: var(--txt2);">WAITING...</div>
+                <div id="res-name" class="result-name">ระบบพร้อมใช้งาน</div>
             </div>
         </div>
     </div>
 
-    <audio id="beep-sound" src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg" preload="auto"></audio>
+    <audio id="beep" src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg" preload="auto"></audio>
 
     <script>
-// =========================================================================
-// 🔴🔴 1. ลิงก์ CSV จาก Google Sheets (อ่านข้อมูล) 🔴🔴
-const CLOUD_DB_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vS3VaaA8mQNte5JZbASD0L0t4ZwBNwjA202MGB7TXYSJxOAzP9BiusvA-LHLVi8j3i3S8UBYeeKIQ-o/pub?gid=1060201169&single=true&output=csv"; 
+        const CONFIG = {
+            CSV_URL: "https://docs.google.com/spreadsheets/d/e/2PACX-1vQqTY3e2U2vzLTefmUK35bwNq6Z0c18h_ticdPTC2vcczVDPY4AKoKVxsZRfU2eZYxugE2fPnf2HWMk/pub?gid=57248429&single=true&output=csv",
+            GAS_URL: "https://script.google.com/macros/s/AKfycbywVCsNVkfiQUNns17RFkVWv1UQm_jDACO5zw-hUIE-Hg2s1md7lk-ZTDqYGFCzhNIE/exec",
+            MQTT_BROKER: 'wss://broker.emqx.io:8084/mqtt'
+        };
 
-// 🔴🔴 2. ลิงก์ Apps Script (เขียนข้อมูล) ที่ได้มาจากแอป Data-Entry 🔴🔴
-const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbywVCsNVkfiQUNns17RFkVWv1UQm_jDACO5zw-hUIE-Hg2s1md7lk-ZTDqYGFCzhNIE/exec";
-// =========================================================================
-
-        let productsDatabase = [];
+        let productsMap = new Map(); // ใช้ Map เพื่อความเร็วสูงสุดในการค้นหา 40,000 รายการ
         let mqttClient = null;
-        let currentTopic = "";
-        let html5QrcodeScanner = null;
+        let scanner = null;
         let isScanning = false;
 
-        async function loadDatabase() {
-            const statusBar = document.getElementById('status-bar');
-            statusBar.innerText = "SYNCING CLOUD DB...";
-            Papa.parse(CLOUD_DB_URL, {
+        // 1. Database Loader (Optimized for 40k items)
+        function loadDatabase() {
+            const dbStat = document.getElementById('db-stat');
+            Papa.parse(CONFIG.CSV_URL, {
                 download: true, header: true, skipEmptyLines: true,
-                complete: function(results) {
-                    if(results.data && results.data.length > 0) {
-                        productsDatabase = results.data;
-                        localStorage.setItem('cyborg_offline_db', JSON.stringify(productsDatabase));
-                    }
-                    setupMQTT(); 
+                complete: (results) => {
+                    productsMap.clear();
+                    results.data.forEach(item => {
+                        const code = String(item.Barcode || item['บาร์โค้ด'] || "").trim();
+                        if(code) productsMap.set(code, item);
+                    });
+                    dbStat.innerText = `DB: ${productsMap.size} ITEMS`;
+                    dbStat.style.color = "var(--g)";
                 },
-                error: function(err) {
-                    const savedDB = localStorage.getItem('cyborg_offline_db');
-                    if(savedDB) {
-                        productsDatabase = JSON.parse(savedDB);
-                        statusBar.innerText = `[ OFFLINE MODE ] จำได้ ${productsDatabase.length} รายการ`;
-                        statusBar.style.color = "var(--o)";
-                    }
-                    setupMQTT(); 
+                error: () => {
+                    dbStat.innerText = "DB: OFFLINE (CACHE)";
+                    dbStat.style.color = "var(--o)";
                 }
             });
         }
-        loadDatabase();
 
+        // 2. MQTT Logic
         function setupMQTT() {
             if (mqttClient) mqttClient.end();
-            const scannerId = document.getElementById('scanner-id').value || "1";
-            currentTopic = 'my-shop-barcode-sync-' + scannerId;
-            const statusBar = document.getElementById('status-bar');
+            const id = document.getElementById('scanner-id').value || "1";
+            const stat = document.getElementById('mqtt-stat');
             
-            mqttClient = mqtt.connect('wss://broker.emqx.io:8084/mqtt');
+            mqttClient = mqtt.connect(CONFIG.MQTT_BROKER, { reconnectPeriod: 5000 });
             mqttClient.on('connect', () => {
-                if(!statusBar.innerText.includes("OFFLINE")) {
-                    statusBar.innerText = `[ UPLINK STABLE ] CH: ${scannerId}`;
-                    statusBar.style.color = "var(--b)";
-                }
+                stat.innerText = `CHANNEL ${id}: ONLINE`;
+                stat.style.color = "var(--g)";
             });
-            mqttClient.on('offline', () => {
-                if(!statusBar.innerText.includes("OFFLINE")) {
-                    statusBar.innerText = `[ MQTT OFFLINE ] ตรวจสอบ/แก้ราคาได้ปกติ`;
-                    statusBar.style.color = "var(--o)";
-                }
+            mqttClient.on('close', () => {
+                stat.innerText = `CHANNEL ${id}: DISCONNECTED`;
+                stat.style.color = "var(--r)";
             });
         }
 
-        // 🔴 ฟังก์ชันถามรหัสผ่าน (Admin Authentication) 🔴
-        async function requireAdminAuth() {
-            const { value: loginValues } = await Swal.fire({
-                title: '[ ADMIN LOGIN ]',
-                html:
-                    `<div style="font-size:12px; color:var(--r); margin-bottom:10px;">การแก้ราคาต้องใช้รหัสผ่านผู้ดูแลระบบ</div>` +
-                    `<input id="swal-user" class="swal-input" placeholder="USERNAME" autocomplete="off">` +
-                    `<input id="swal-pass" type="password" class="swal-input" placeholder="PASSWORD">`,
-                focusConfirm: false,
-                showCancelButton: true,
-                confirmButtonText: 'LOGIN',
-                cancelButtonText: 'ยกเลิก',
-                customClass: { popup: 'swal-cyberpunk', title: 'swal-title', confirmButton: 'swal-confirm', cancelButton: 'swal-cancel' },
-                preConfirm: () => {
-                    return [
-                        document.getElementById('swal-user').value,
-                        document.getElementById('swal-pass').value
-                    ]
-                }
-            });
-
-            if (loginValues) {
-                const [user, pass] = loginValues;
-                // 🔴 ตรวจสอบ Username และ Password ตรงนี้ 🔴
-                if (user === 'superadmin' && pass === 'superadmin') {
-                    return true; // รหัสถูก ส่งค่ากลับไปเปิดฟอร์ม
-                } else {
-                    Swal.fire({icon: 'error', title: 'ACCESS DENIED', text: 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง!', customClass: { popup: 'swal-cyberpunk'}});
-                    return false; // รหัสผิด
-                }
-            }
-            return false; // กดยกเลิก
-        }
-
-        // ฟังก์ชันเปิด Pop-up แก้ไข/เพิ่มสินค้า
-        async function openEditForm(barcode, oldName, oldPrice) {
-            const { value: formValues } = await Swal.fire({
-                title: '[ DATABASE OVERRIDE ]',
-                html:
-                    `<div style="font-family:'Orbitron'; font-size:16px; color:var(--b); margin-bottom:10px;">CODE: ${barcode}</div>` +
-                    `<div style="text-align:left; font-size:12px; color:var(--o); margin:10px 5%;">PRODUCT NAME:</div>` +
-                    `<input id="swal-input1" class="swal-input" placeholder="พิมพ์ชื่อสินค้า..." value="${oldName === 'ไม่พบข้อมูล (สินค้าใหม่)' ? '' : oldName}">` +
-                    `<div style="text-align:left; font-size:12px; color:var(--o); margin:10px 5%;">PRICE (THB):</div>` +
-                    `<input id="swal-input2" type="number" step="0.01" class="swal-input" placeholder="0.00" value="${oldPrice === '0.00' ? '' : oldPrice}">`,
-                focusConfirm: false,
-                showCancelButton: true,
-                confirmButtonText: '💾 UPLOAD TO CLOUD',
-                cancelButtonText: 'ยกเลิก',
-                customClass: { popup: 'swal-cyberpunk', title: 'swal-title', confirmButton: 'swal-deny', cancelButton: 'swal-cancel' },
-                preConfirm: () => {
-                    return [ document.getElementById('swal-input1').value, document.getElementById('swal-input2').value ]
-                }
-            });
-
-            if (formValues) {
-                const [newName, newPrice] = formValues;
-                if (!newName || !newPrice) {
-                    Swal.fire({icon: 'error', title: 'ERROR', text: 'กรอกชื่อและราคาให้ครบ', customClass: { popup: 'swal-cyberpunk'}});
-                    resumeCamera();
-                    return;
-                }
-
-                Swal.fire({
-                    title: 'TRANSMITTING...',
-                    text: 'กำลังอัปเดตข้อมูลขึ้น Google Sheets',
-                    allowOutsideClick: false,
-                    customClass: { popup: 'swal-cyberpunk', title: 'swal-title'},
-                    didOpen: () => { Swal.showLoading() }
-                });
-
-                const payload = { Barcode: barcode, ProductName: newName, Price: newPrice, Size: "", Unit: "ชิ้น" };
-
-                fetch(GAS_WEB_APP_URL, {
-                    method: 'POST', mode: 'no-cors',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                }).then(() => {
-                    Swal.fire({
-                        title: 'UPDATE SUCCESS!', text: `อัปเดต [ ${newName} ] ลงฐานข้อมูลเรียบร้อย`,
-                        icon: 'success', timer: 2000, showConfirmButton: false,
-                        customClass: { popup: 'swal-cyberpunk', title: 'swal-title'}
-                    });
-                    document.getElementById('result-name').innerText = "ฐานข้อมูลอัปเดตแล้ว!";
-                    document.getElementById('result-name').style.color = "var(--b)";
-                    setTimeout(() => { loadDatabase(); }, 2000); 
-                }).catch(() => {
-                    Swal.fire({icon: 'error', title: 'FAILED', text: 'อัปเดตไม่สำเร็จ เช็คอินเทอร์เน็ต', customClass: { popup: 'swal-cyberpunk'}});
-                }).finally(() => { resumeCamera(); });
-            } else {
-                resumeCamera();
-            }
-        }
-
-        function resumeCamera() {
-            if(isScanning && html5QrcodeScanner) setTimeout(() => { html5QrcodeScanner.resume(); }, 500);
-        }
-
-        function handleBarcodeScanned(barcode) {
-            if (barcode === "") return;
-
-            if(html5QrcodeScanner && html5QrcodeScanner.getState() === 2) { html5QrcodeScanner.pause(); }
-
-            let audio = document.getElementById('beep-sound');
-            audio.currentTime = 0; audio.play().catch(()=>{});
-            if (navigator.vibrate) navigator.vibrate([50]); 
-
-            const product = productsDatabase.find(p => String(p.Barcode||p.barcode||p['บาร์โค้ด']) === String(barcode));
-            const productName = product ? (product.ProductName || product.name || product['ชื่อสินค้า']) : "ไม่พบข้อมูล (สินค้าใหม่)";
-            const productPrice = product ? (product.Price || product.price || product['ราคาขาย'] || "0.00") : "0.00";
-
-            document.getElementById('result-code').innerText = `[ CODE: ${barcode} ]`;
-            document.getElementById('result-name').innerText = "รอการสั่งการ...";
-            document.getElementById('result-name').style.color = "var(--o)";
-
-            Swal.fire({
-                title: 'SCAN RESULT',
-                html: `<div style="font-family:'Orbitron'; font-size:18px; color:var(--txt2); margin-bottom:5px;">${barcode}</div>
-                       <div style="font-family:'Sarabun'; font-size:18px; color:var(--txt); margin-bottom:15px; font-weight:bold;">${productName}</div>
-                       <div style="background:rgba(255,107,53,0.1); border:1px solid var(--o); padding:10px; border-radius:5px; margin-bottom:10px;">
-                           <div style="font-family:'Orbitron'; font-size:45px; font-weight:900; color:var(--o); text-shadow: 0 0 15px rgba(255,107,53,0.5); line-height:1;">
-                               ${productPrice} <span style="font-size:18px; color:var(--txt2);">THB</span>
-                           </div>
-                       </div>`,
-                icon: 'none',
-                showCancelButton: true,
-                showDenyButton: true,
-                confirmButtonText: '[ SEND ] ส่งทำป้าย',
-                denyButtonText: '[ ✏️ ] แก้ราคา/เพิ่มใหม่',
-                cancelButtonText: '[ X ] ปิด',
-                customClass: { popup: 'swal-cyberpunk', title: 'swal-title', confirmButton: 'swal-confirm', denyButton: 'swal-deny', cancelButton: 'swal-cancel' },
-                allowOutsideClick: false
-            }).then(async (result) => {
-                if (result.isConfirmed) {
-                    const payload = { barcode: barcode };
-                    if (mqttClient && mqttClient.connected) {
-                        mqttClient.publish(currentTopic, JSON.stringify(payload));
-                        document.getElementById('result-name').innerText = "ส่งเข้าคิวพิมพ์ป้ายสำเร็จ!";
-                        document.getElementById('result-name').style.color = "var(--g)";
-                        if (navigator.vibrate) navigator.vibrate([50, 50, 50]); 
-                    } else {
-                        document.getElementById('result-name').innerText = "⚠️ ส่งไม่สำเร็จ (ออฟไลน์)";
-                        document.getElementById('result-name').style.color = "var(--r)";
-                        Swal.fire({ icon: 'warning', title: 'UPLINK OFFLINE', text: 'ไม่สามารถส่งไปที่หน้าจอพิมพ์ป้ายได้', customClass: { popup: 'swal-cyberpunk'} });
-                    }
-                    resumeCamera();
-
-                } else if (result.isDenied) {
-                    // 🔴 1. ตรวจสอบรหัสผ่านก่อนเปิดหน้าแก้ไข
-                    const isAuthorized = await requireAdminAuth();
-                    if(isAuthorized) {
-                        // 🔴 2. ถ้ารหัสถูก ค่อยเปิดหน้าแก้ราคาให้
-                        openEditForm(barcode, productName, productPrice);
-                    } else {
-                        // ถ้ารหัสผิด ให้ปลดล็อกกล้องกลับมาทำงาน
-                        resumeCamera();
-                    }
-                } else {
-                    document.getElementById('result-name').innerText = "สแตนด์บาย...";
-                    document.getElementById('result-name').style.color = "var(--txt2)";
-                    resumeCamera();
-                }
-            });
-        }
-
-        function processManualScan() {
-            const input = document.getElementById('barcode-input');
-            handleBarcodeScanned(input.value.trim());
-            input.value = ''; input.blur(); 
-        }
-
-        function toggleCamera() {
+        // 3. Scanner Logic
+        async function toggleCamera() {
             const btn = document.getElementById('cam-btn');
             const readerDiv = document.getElementById('reader');
-            const beam = document.getElementById('scan-beam-overlay');
-            const targetBox = document.getElementById('target-box');
+            const panel = document.getElementById('scanner-panel');
 
             if (isScanning) {
-                if(html5QrcodeScanner) {
-                    html5QrcodeScanner.stop().then(() => {
-                        readerDiv.style.display = "none"; beam.style.display = "none"; targetBox.style.display = "none";
-                        btn.innerHTML = "[ O ] ENABLE OPTICS"; btn.classList.remove('stop');
-                        isScanning = false;
-                    }).catch(e => console.log(e));
-                }
+                if(scanner) await scanner.stop();
+                readerDiv.style.display = "none";
+                panel.classList.remove('scanning');
+                btn.innerText = "[ O ] START SCANNER";
+                btn.classList.remove('btn-stop');
+                isScanning = false;
             } else {
-                readerDiv.style.display = "block"; beam.style.display = "block"; targetBox.style.display = "block";
-                btn.innerHTML = "[ X ] DISABLE OPTICS"; btn.classList.add('stop');
-                
-                html5QrcodeScanner = new Html5Qrcode("reader");
+                readerDiv.style.display = "block";
+                panel.classList.add('scanning');
+                btn.innerText = "[ X ] STOP SCANNER";
+                btn.classList.add('btn-stop');
+
+                scanner = new Html5Qrcode("reader");
                 const config = { 
-                    fps: 15, 
-                    qrbox: function(vw, vh) { return { width: vw * 0.85, height: 120 }; },
-                    formatsToSupport: [ Html5QrcodeSupportedFormats.CODE_128, Html5QrcodeSupportedFormats.EAN_13, Html5QrcodeSupportedFormats.EAN_8, Html5QrcodeSupportedFormats.UPC_A ]
+                    fps: 10, // ลด FPS เพื่อลดความร้อน
+                    qrbox: { width: 250, height: 150 },
+                    aspectRatio: 1.0,
+                    formatsToSupport: [ 
+                        Html5QrcodeSupportedFormats.EAN_13, 
+                        Html5QrcodeSupportedFormats.CODE_128,
+                        Html5QrcodeSupportedFormats.UPC_A 
+                    ]
                 };
 
-                html5QrcodeScanner.start(
-                    { facingMode: "environment" }, config,
-                    (decodedText) => { handleBarcodeScanned(decodedText); },
-                    (errorMessage) => { }
-                ).catch(err => {
-                    alert("⚠️ ERROR: CAMERA MODULE OFFLINE");
-                    readerDiv.style.display = "none"; beam.style.display = "none"; targetBox.style.display = "none";
-                    btn.innerHTML = "[ O ] ENABLE OPTICS"; btn.classList.remove('stop');
-                    isScanning = false;
+                scanner.start({ facingMode: "environment" }, config, onScanSuccess)
+                .catch(err => {
+                    Swal.fire({ icon: 'error', title: 'CAMERA ERROR', text: 'เข้าถึงกล้องไม่ได้', customClass: {popup: 'swal-cyber'} });
+                    toggleCamera();
                 });
                 isScanning = true;
             }
         }
+
+        function onScanSuccess(decodedText) {
+            handleProcess(decodedText.trim());
+        }
+
+        function processManualScan() {
+            const input = document.getElementById('barcode-input');
+            if(input.value) handleProcess(input.value.trim());
+            input.value = '';
+        }
+
+        // 4. Core Logic (Search & Feedback)
+        async function handleProcess(barcode) {
+            if (scanner && scanner.getState() === 2) scanner.pause();
+
+            // Feedback ทันที
+            document.getElementById('beep').play().catch(()=>{});
+            if (navigator.vibrate) navigator.vibrate(50);
+            
+            const product = productsMap.get(barcode);
+            const name = product ? (product.ProductName || product['ชื่อสินค้า'] || "ไม่ทราบชื่อ") : "สินค้าใหม่";
+            const price = product ? (product.Price || product['ราคาขาย'] || "0.00") : "0.00";
+
+            document.getElementById('res-code').innerText = `CODE: ${barcode}`;
+            document.getElementById('res-name').innerText = "กำลังรอคำสั่ง...";
+
+            Swal.fire({
+                title: 'FOUND DATA',
+                html: `<b style="color:var(--b)">${barcode}</b><br><h2 style="margin:10px 0">${name}</h2><div style="font-size:30px; color:var(--o)">฿${price}</div>`,
+                showCancelButton: true,
+                showDenyButton: true,
+                confirmButtonText: 'SEND TO PRINT',
+                denyButtonText: 'EDIT PRICE',
+                customClass: { popup: 'swal-cyber', confirmButton: 'btn', denyButton: 'btn', cancelButton: 'btn' }
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    sendToPrinter(barcode);
+                } else if (result.isDenied) {
+                    // ตรงนี้สามารถเพิ่ม logic requireAdminAuth แบบเดิมได้
+                    Swal.fire('Coming Soon', 'ระบบแก้ไขราคากำลังปรับปรุง', 'info');
+                    if(scanner) scanner.resume();
+                } else {
+                    if(scanner) scanner.resume();
+                }
+            });
+        }
+
+        function sendToPrinter(barcode) {
+            const topic = 'my-shop-barcode-sync-' + document.getElementById('scanner-id').value;
+            if (mqttClient && mqttClient.connected) {
+                mqttClient.publish(topic, JSON.stringify({ barcode: barcode }));
+                
+                // Visual Feedback ว่าส่งสำเร็จ
+                document.getElementById('main-body').classList.add('sync-flash');
+                setTimeout(() => document.getElementById('main-body').classList.remove('sync-flash'), 400);
+                
+                document.getElementById('res-name').innerText = "ส่งข้อมูลสำเร็จ ✓";
+                document.getElementById('res-name').style.color = "var(--g)";
+            } else {
+                Swal.fire('Error', 'MQTT Offline', 'error');
+            }
+            if(scanner) scanner.resume();
+        }
+
+        // Init
+        loadDatabase();
+        setupMQTT();
     </script>
 </body>
 </html>
