@@ -114,11 +114,11 @@
 
     <script>
         // =========================================================================
-        // 🔴🔴 วางลิงก์ CSV ของ GOOGLE SHEETS (ใช้ลิงก์เดียวกันทั้ง 2 ไฟล์) 🔴🔴
+        // 🔴 ใช้ลิงก์เดียวกันทั้งกล้องและเครื่องปริ้นท์
         // =========================================================================
-        const CLOUD_DB_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQqTY3e2U2vzLTefmUK35bwNq6Z0c18h_ticdPTC2vcczVDPY4AKoKVxsZRfU2eZYxugE2fPnf2HWMk/pub?gid=57248429&single=true&output=csv"; 
+        const CLOUD_DB_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vS3VaaA8mQNte5JZbASD0L0t4ZwBNwjA202MGB7TXYSJxOAzP9BiusvA-LHLVi8j3i3S8UBYeeKIQ-o/pub?gid=1060201169&single=true&output=csv"; 
         
-        // 🔒 AUTO-SYNC TOPIC (คีย์ลับสำหรับคุยกันอัตโนมัติ)
+        // 🔒 AUTO-SYNC TOPIC
         const AUTO_SYNC_TOPIC = "cyborg-tag-sys-auto-sync-v8-master";
         // =========================================================================
 
@@ -179,12 +179,12 @@
             constructor() { 
                 this.html5QrcodeScanner = null; 
                 this.isScanning = false; 
-                this.isProcessing = false; // ป้องกันการสแกนรัวๆ
+                this.isProcessing = false; 
             }
 
             handleScan(barcode) {
                 if (!barcode || this.isProcessing) return;
-                this.isProcessing = true; // ล็อกทันทีที่สแกนติด
+                this.isProcessing = true; 
                 App.state.confirmPayload(barcode);
             }
 
@@ -261,7 +261,6 @@
                 const product = App.database.find(barcode);
                 const rawName = product ? (product.ProductName || product.name || product['ชื่อสินค้า']) : "เพิ่มบาร์โค้ดใหม่ลงในระบบ";
                 
-                // ป้องกัน XSS ก่อนนำไปแสดงผล
                 const safeBarcode = Utils.escapeHTML(barcode);
                 const safeName = Utils.escapeHTML(rawName);
 
@@ -294,7 +293,6 @@
                         document.getElementById('result-name').innerText = "ยกเลิกการส่ง";
                         document.getElementById('result-name').style.color = "var(--r)";
                     }
-                    // ปลดล็อกให้สแกนรอบต่อไปได้
                     setTimeout(() => { App.scanner.isProcessing = false; }, 500);
                 });
             }
